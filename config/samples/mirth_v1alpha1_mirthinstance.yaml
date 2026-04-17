@@ -1,0 +1,27 @@
+apiVersion: mirth.pyle.io/v1alpha1
+kind: MirthInstance
+metadata:
+  labels:
+    app.kubernetes.io/name: mirth-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mirth-dev
+  namespace: integrations
+spec:
+  connection:
+    host: mirth-connect.integrations.svc.cluster.local
+    port: 8443
+    tls:
+      insecureSkipVerify: true
+    authSecretRef:
+      name: mirth-admin-credentials
+  monitoring:
+    intervalSeconds: 30
+    metrics:
+      enabled: true
+  remediation:
+    enabled: true
+    restartStoppedChannels: true
+    restartErroredChannels: true
+    maxRestartAttempts: 3
+    cooldownSeconds: 300
+    excludeChannels: []

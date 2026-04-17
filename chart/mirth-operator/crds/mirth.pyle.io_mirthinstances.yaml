@@ -1,0 +1,333 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: mirthinstances.mirth.pyle.io
+spec:
+  group: mirth.pyle.io
+  names:
+    kind: MirthInstance
+    listKind: MirthInstanceList
+    plural: mirthinstances
+    singular: mirthinstance
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Connected")].status
+      name: Connected
+      type: string
+    - jsonPath: .status.channels.total
+      name: Channels
+      type: integer
+    - jsonPath: .status.channels.started
+      name: Healthy
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: MirthInstance is the Schema for the mirthinstances API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of MirthInstance.
+            properties:
+              connection:
+                description: connection configures how to reach the Mirth Connect
+                  REST API.
+                properties:
+                  authSecretRef:
+                    description: authSecretRef references a Kubernetes Secret containing
+                      "username" and "password" keys.
+                    properties:
+                      name:
+                        description: name is the name of the Secret in the same namespace
+                          as the MirthInstance.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  host:
+                    description: host is the hostname or IP of the Mirth Connect server.
+                    type: string
+                  port:
+                    default: 8443
+                    description: port is the Mirth Connect REST API port (typically
+                      8443).
+                    type: integer
+                  tls:
+                    description: tls configures TLS settings for the connection.
+                    properties:
+                      insecureSkipVerify:
+                        description: |-
+                          insecureSkipVerify disables TLS certificate verification.
+                          Use only for self-signed certificates in non-production environments.
+                        type: boolean
+                    type: object
+                required:
+                - authSecretRef
+                - host
+                type: object
+              monitoring:
+                description: monitoring configures how often to poll Mirth and whether
+                  to expose Prometheus metrics.
+                properties:
+                  intervalSeconds:
+                    default: 30
+                    description: intervalSeconds is how often (in seconds) the operator
+                      polls Mirth for status.
+                    minimum: 5
+                    type: integer
+                  metrics:
+                    description: metrics configures Prometheus metrics exposure.
+                    properties:
+                      enabled:
+                        default: true
+                        description: enabled controls whether Prometheus metrics are
+                          collected for this instance.
+                        type: boolean
+                    type: object
+                type: object
+              remediation:
+                description: remediation configures automatic self-healing of unhealthy
+                  channels.
+                properties:
+                  cooldownSeconds:
+                    default: 300
+                    description: cooldownSeconds is the minimum time between restart
+                      attempts for the same channel.
+                    type: integer
+                  enabled:
+                    description: enabled controls whether automatic remediation is
+                      active.
+                    type: boolean
+                  excludeChannels:
+                    description: excludeChannels is a list of channel IDs or names
+                      to exclude from remediation.
+                    items:
+                      type: string
+                    type: array
+                  maxRestartAttempts:
+                    default: 3
+                    description: |-
+                      maxRestartAttempts is the maximum number of restart attempts per channel
+                      before giving up. 0 means unlimited.
+                    type: integer
+                  restartErroredChannels:
+                    description: restartErroredChannels restarts channels that are
+                      in ERROR state.
+                    type: boolean
+                  restartStoppedChannels:
+                    description: restartStoppedChannels restarts channels that are
+                      in STOPPED state.
+                    type: boolean
+                type: object
+            required:
+            - connection
+            - monitoring
+            type: object
+          status:
+            description: status defines the observed state of MirthInstance.
+            properties:
+              channelDetails:
+                description: channelDetails lists the status of each individual channel.
+                items:
+                  description: ChannelStatus represents the status of a single Mirth
+                    channel.
+                  properties:
+                    errored:
+                      description: errored is the total number of errored messages.
+                      format: int64
+                      type: integer
+                    filtered:
+                      description: filtered is the total number of filtered messages.
+                      format: int64
+                      type: integer
+                    id:
+                      description: id is the Mirth channel UUID.
+                      type: string
+                    name:
+                      description: name is the channel display name.
+                      type: string
+                    queued:
+                      description: queued is the current queue depth.
+                      format: int64
+                      type: integer
+                    received:
+                      description: received is the total number of messages received.
+                      format: int64
+                      type: integer
+                    sent:
+                      description: sent is the total number of messages sent.
+                      format: int64
+                      type: integer
+                    state:
+                      description: state is the channel state (STARTED, STOPPED, PAUSED,
+                        ERROR).
+                      type: string
+                  required:
+                  - id
+                  - name
+                  - state
+                  type: object
+                type: array
+              channels:
+                description: channels is a summary of channel health.
+                properties:
+                  errored:
+                    description: errored is the number of channels in ERROR state.
+                    type: integer
+                  paused:
+                    description: paused is the number of channels in PAUSED state.
+                    type: integer
+                  started:
+                    description: started is the number of channels in STARTED state.
+                    type: integer
+                  stopped:
+                    description: stopped is the number of channels in STOPPED state.
+                    type: integer
+                  total:
+                    description: total is the total number of channels.
+                    type: integer
+                type: object
+              conditions:
+                description: |-
+                  conditions represent the current state of the MirthInstance.
+                  Condition types: Connected, AllChannelsHealthy, RemediationActive
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              lastChecked:
+                description: lastChecked is the last time the operator successfully
+                  polled Mirth.
+                format: date-time
+                type: string
+              remediationHistory:
+                description: remediationHistory records recent remediation actions.
+                items:
+                  description: RemediationEvent records a single remediation action.
+                  properties:
+                    action:
+                      description: action is what was done (e.g. "start", "restart").
+                      type: string
+                    channelId:
+                      description: channelID is the Mirth channel UUID.
+                      type: string
+                    channelName:
+                      description: channelName is the channel display name.
+                      type: string
+                    message:
+                      description: message provides additional details.
+                      type: string
+                    result:
+                      description: result is the outcome ("success" or "failure").
+                      type: string
+                    timestamp:
+                      description: timestamp is when the remediation occurred.
+                      format: date-time
+                      type: string
+                  required:
+                  - action
+                  - channelId
+                  - channelName
+                  - result
+                  - timestamp
+                  type: object
+                type: array
+              server:
+                description: server contains Mirth server information.
+                properties:
+                  jvmHeapUsedBytes:
+                    description: jvmHeapUsedBytes is the current JVM heap usage.
+                    format: int64
+                    type: integer
+                  status:
+                    description: status is the Mirth server status (e.g. "RUNNING").
+                    type: string
+                  version:
+                    description: version is the Mirth Connect version string.
+                    type: string
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

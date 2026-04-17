@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/pyle-cloud-technologies/mirth-operator
+  tag: ""  # defaults to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+leaderElection:
+  enabled: true
+
+metrics:
+  enabled: true
+  port: 8443
+  # secure enables HTTPS + authn/authz on the metrics endpoint via K8s TokenReview.
+  # When true, Prometheus needs a ServiceAccount with the metrics-reader ClusterRole.
+  # Set to false for plain HTTP (e.g. behind a trusted network or service mesh).
+  secure: true
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    namespace: ""
+    additionalLabels: {}
+    # prometheusServiceAccount is the SA used by Prometheus to scrape metrics.
+    # A ClusterRoleBinding is created granting it the metrics-reader role.
+    prometheusServiceAccount: prometheus-k8s
+    # prometheusNamespace is the namespace where the Prometheus SA lives.
+    prometheusNamespace: monitoring
+
+healthProbe:
+  port: 8081

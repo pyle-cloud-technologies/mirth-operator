@@ -1,0 +1,30 @@
+{{- if and .Values.metrics.enabled .Values.metrics.secure }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "mirth-operator.fullname" . }}-metrics-reader
+  labels:
+    {{- include "mirth-operator.labels" . | nindent 4 }}
+rules:
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+{{- if .Values.metrics.serviceMonitor.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "mirth-operator.fullname" . }}-metrics-reader
+  labels:
+    {{- include "mirth-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "mirth-operator.fullname" . }}-metrics-reader
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.metrics.serviceMonitor.prometheusServiceAccount | default "prometheus-k8s" }}
+    namespace: {{ .Values.metrics.serviceMonitor.prometheusNamespace | default "monitoring" }}
+{{- end }}
+{{- end }}
