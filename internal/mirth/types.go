@@ -49,7 +49,7 @@ type SystemStatsResponse struct {
 
 // SystemStats represents the Mirth Connect system statistics.
 type SystemStats struct {
-	Timestamp     map[string]interface{} `json:"timestamp"`
+	Timestamp     map[string]any `json:"timestamp"`
 	FreeMemory    int64                  `json:"freeMemoryBytes"`
 	AllocMemory   int64                  `json:"allocatedMemoryBytes"`
 	MaxMemory     int64                  `json:"maxMemoryBytes"`

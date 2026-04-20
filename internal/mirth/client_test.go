@@ -24,17 +24,16 @@ import (
 	"testing"
 )
 
-func newTestServer(t *testing.T, handler http.Handler) (*httptest.Server, Client) {
+func newTestServer(t *testing.T, handler http.Handler) Client {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	client := NewClient(ClientConfig{
+	return NewClient(ClientConfig{
 		BaseURL:  server.URL,
 		Username: "admin",
 		Password: "admin",
 	})
-	return server, client
 }
 
 func TestGetServerStatus(t *testing.T) {
@@ -56,10 +55,10 @@ func TestGetServerStatus(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ServerStatusResponse{Int: 0})
+		_ = json.NewEncoder(w).Encode(ServerStatusResponse{Int: 0})
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	status, err := client.GetServerStatus(context.Background())
 	if err != nil {
@@ -74,7 +73,7 @@ func TestGetSystemStats(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/system/stats", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(SystemStatsResponse{
+		_ = json.NewEncoder(w).Encode(SystemStatsResponse{
 			Stats: SystemStats{
 				FreeMemory:  1024,
 				AllocMemory: 4096,
@@ -83,7 +82,7 @@ func TestGetSystemStats(t *testing.T) {
 		})
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	stats, err := client.GetSystemStats(context.Background())
 	if err != nil {
@@ -98,7 +97,7 @@ func TestGetChannelStatuses(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/channels/statuses", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(DashboardStatusListResponse{
+		_ = json.NewEncoder(w).Encode(DashboardStatusListResponse{
 			List: &DashboardStatusList{
 				DashboardStatuses: []DashboardStatus{
 					{
@@ -123,7 +122,7 @@ func TestGetChannelStatuses(t *testing.T) {
 		})
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	statuses, err := client.GetChannelStatuses(context.Background())
 	if err != nil {
@@ -152,7 +151,7 @@ func TestGetChannelStatistics(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ChannelStatistics{
+		_ = json.NewEncoder(w).Encode(ChannelStatistics{
 			ChannelID: "ch-1",
 			Received:  500,
 			Sent:      490,
@@ -162,7 +161,7 @@ func TestGetChannelStatistics(t *testing.T) {
 		})
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	stats, err := client.GetChannelStatistics(context.Background(), "ch-1")
 	if err != nil {
@@ -184,7 +183,7 @@ func TestRestartChannel(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	err := client.RestartChannel(context.Background(), "ch-1")
 	if err != nil {
@@ -203,7 +202,7 @@ func TestStartChannel(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	err := client.StartChannel(context.Background(), "ch-2")
 	if err != nil {
@@ -215,10 +214,10 @@ func TestServerErrorResponse(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/server/status", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("internal error"))
+		_, _ = w.Write([]byte("internal error"))
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	_, err := client.GetServerStatus(context.Background())
 	if err == nil {
@@ -230,10 +229,10 @@ func TestUnauthorizedResponse(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/server/status", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("unauthorized"))
+		_, _ = w.Write([]byte("unauthorized"))
 	})
 
-	_, client := newTestServer(t, mux)
+	client := newTestServer(t, mux)
 
 	_, err := client.GetServerStatus(context.Background())
 	if err == nil {

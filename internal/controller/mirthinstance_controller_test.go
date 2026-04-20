@@ -134,7 +134,7 @@ var _ = Describe("MirthInstance Controller", func() {
 // fakeRecorder implements record.EventRecorder for testing.
 type fakeRecorder struct{}
 
-func (f *fakeRecorder) Event(_ runtime.Object, _, _, _ string)                    {}
-func (f *fakeRecorder) Eventf(_ runtime.Object, _, _, _ string, _ ...interface{}) {}
-func (f *fakeRecorder) AnnotatedEventf(_ runtime.Object, _ map[string]string, _, _, _ string, _ ...interface{}) {
+func (f *fakeRecorder) Event(_ runtime.Object, _, _, _ string)              {}
+func (f *fakeRecorder) Eventf(_ runtime.Object, _, _, _ string, _ ...any)   {}
+func (f *fakeRecorder) AnnotatedEventf(_ runtime.Object, _ map[string]string, _, _, _ string, _ ...any) {
 }
