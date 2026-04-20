@@ -56,7 +56,7 @@ func TestGetServerStatus(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ServerStatus{Status: "RUNNING"})
+		json.NewEncoder(w).Encode(ServerStatusResponse{Int: 0})
 	})
 
 	_, client := newTestServer(t, mux)
@@ -65,8 +65,8 @@ func TestGetServerStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if status.Status != "RUNNING" {
-		t.Errorf("expected RUNNING, got %s", status.Status)
+	if status.ServerStatusString() != "STARTED" {
+		t.Errorf("expected STARTED, got %s", status.ServerStatusString())
 	}
 }
 
@@ -74,10 +74,12 @@ func TestGetSystemStats(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/system/stats", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(SystemStats{
-			FreeMemory:  1024,
-			AllocMemory: 4096,
-			MaxMemory:   8192,
+		json.NewEncoder(w).Encode(SystemStatsResponse{
+			Stats: SystemStats{
+				FreeMemory:  1024,
+				AllocMemory: 4096,
+				MaxMemory:   8192,
+			},
 		})
 	})
 
@@ -96,24 +98,26 @@ func TestGetChannelStatuses(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/channels/statuses", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(DashboardStatusList{
-			DashboardStatuses: []DashboardStatus{
-				{
-					ChannelID: "ch-1",
-					Name:      "HL7 Inbound",
-					State:     "STARTED",
-					Statistics: &ChannelStatistics{
-						Received: 100,
-						Sent:     95,
-						Error:    5,
-						Filtered: 0,
-						Queued:   2,
+		json.NewEncoder(w).Encode(DashboardStatusListResponse{
+			List: &DashboardStatusList{
+				DashboardStatuses: []DashboardStatus{
+					{
+						ChannelID: "ch-1",
+						Name:      "HL7 Inbound",
+						State:     "STARTED",
+						Statistics: &ChannelStatistics{
+							Received: 100,
+							Sent:     95,
+							Error:    5,
+							Filtered: 0,
+							Queued:   2,
+						},
 					},
-				},
-				{
-					ChannelID: "ch-2",
-					Name:      "FHIR Outbound",
-					State:     "STOPPED",
+					{
+						ChannelID: "ch-2",
+						Name:      "FHIR Outbound",
+						State:     "STOPPED",
+					},
 				},
 			},
 		})

@@ -28,7 +28,7 @@ import (
 
 // Client communicates with the Mirth Connect REST API.
 type Client interface {
-	GetServerStatus(ctx context.Context) (*ServerStatus, error)
+	GetServerStatus(ctx context.Context) (*ServerStatusResponse, error)
 	GetSystemStats(ctx context.Context) (*SystemStats, error)
 	GetChannelStatuses(ctx context.Context) ([]DashboardStatus, error)
 	GetChannelStatistics(ctx context.Context, channelID string) (*ChannelStatistics, error)
@@ -100,13 +100,13 @@ func (c *httpClient) doRequest(ctx context.Context, method, path string) ([]byte
 	return body, nil
 }
 
-func (c *httpClient) GetServerStatus(ctx context.Context) (*ServerStatus, error) {
+func (c *httpClient) GetServerStatus(ctx context.Context) (*ServerStatusResponse, error) {
 	body, err := c.doRequest(ctx, http.MethodGet, "/api/server/status")
 	if err != nil {
 		return nil, fmt.Errorf("getting server status: %w", err)
 	}
 
-	var status ServerStatus
+	var status ServerStatusResponse
 	if err := json.Unmarshal(body, &status); err != nil {
 		return nil, fmt.Errorf("unmarshaling server status: %w", err)
 	}
@@ -120,12 +120,12 @@ func (c *httpClient) GetSystemStats(ctx context.Context) (*SystemStats, error) {
 		return nil, fmt.Errorf("getting system stats: %w", err)
 	}
 
-	var stats SystemStats
-	if err := json.Unmarshal(body, &stats); err != nil {
+	var resp SystemStatsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, fmt.Errorf("unmarshaling system stats: %w", err)
 	}
 
-	return &stats, nil
+	return &resp.Stats, nil
 }
 
 func (c *httpClient) GetChannelStatuses(ctx context.Context) ([]DashboardStatus, error) {
@@ -134,12 +134,16 @@ func (c *httpClient) GetChannelStatuses(ctx context.Context) ([]DashboardStatus,
 		return nil, fmt.Errorf("getting channel statuses: %w", err)
 	}
 
-	var list DashboardStatusList
-	if err := json.Unmarshal(body, &list); err != nil {
+	var resp DashboardStatusListResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, fmt.Errorf("unmarshaling channel statuses: %w", err)
 	}
 
-	return list.DashboardStatuses, nil
+	if resp.List == nil {
+		return nil, nil
+	}
+
+	return resp.List.DashboardStatuses, nil
 }
 
 func (c *httpClient) GetChannelStatistics(ctx context.Context, channelID string) (*ChannelStatistics, error) {

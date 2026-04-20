@@ -42,8 +42,8 @@ func newMockClient() *mockClient {
 	}
 }
 
-func (m *mockClient) GetServerStatus(_ context.Context) (*mirth.ServerStatus, error) {
-	return &mirth.ServerStatus{Status: "RUNNING"}, nil
+func (m *mockClient) GetServerStatus(_ context.Context) (*mirth.ServerStatusResponse, error) {
+	return &mirth.ServerStatusResponse{Int: 0}, nil
 }
 
 func (m *mockClient) GetSystemStats(_ context.Context) (*mirth.SystemStats, error) {

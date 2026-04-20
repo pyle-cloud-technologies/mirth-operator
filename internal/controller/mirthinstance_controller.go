@@ -109,7 +109,7 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	collector.MirthUp.WithLabelValues(instanceName).Set(1)
 	r.setCondition(&instance, "Connected", metav1.ConditionTrue, "Connected", "Successfully connected to Mirth")
-	instance.Status.Server.Status = serverStatus.Status
+	instance.Status.Server.Status = serverStatus.ServerStatusString()
 
 	// 5. Poll system stats
 	sysStats, err := mirthCli.GetSystemStats(ctx)
