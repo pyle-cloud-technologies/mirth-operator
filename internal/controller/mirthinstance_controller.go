@@ -146,18 +146,17 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			summary.Paused++
 		}
 
-		detail := mirthv1alpha1.ChannelStatus{
-			ID:    ch.ChannelID,
-			Name:  ch.Name,
-			State: ch.State,
-		}
+		stats := ch.ParseStatistics()
 
-		if ch.Statistics != nil {
-			detail.Received = ch.Statistics.Received
-			detail.Sent = ch.Statistics.Sent
-			detail.Errored = ch.Statistics.Error
-			detail.Queued = ch.Statistics.Queued
-			detail.Filtered = ch.Statistics.Filtered
+		detail := mirthv1alpha1.ChannelStatus{
+			ID:       ch.ChannelID,
+			Name:     ch.Name,
+			State:    ch.State,
+			Received: stats.Received,
+			Sent:     stats.Sent,
+			Errored:  stats.Error,
+			Queued:   stats.Queued,
+			Filtered: stats.Filtered,
 		}
 
 		details = append(details, detail)
@@ -172,13 +171,11 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				collector.ChannelStatus.WithLabelValues(instanceName, ch.Name, s).Set(val)
 			}
 
-			if ch.Statistics != nil {
-				collector.ChannelMessagesReceived.WithLabelValues(instanceName, ch.Name).Set(float64(ch.Statistics.Received))
-				collector.ChannelMessagesSent.WithLabelValues(instanceName, ch.Name).Set(float64(ch.Statistics.Sent))
-				collector.ChannelMessagesErrored.WithLabelValues(instanceName, ch.Name).Set(float64(ch.Statistics.Error))
-				collector.ChannelMessagesQueued.WithLabelValues(instanceName, ch.Name).Set(float64(ch.Statistics.Queued))
-				collector.ChannelMessagesFiltered.WithLabelValues(instanceName, ch.Name).Set(float64(ch.Statistics.Filtered))
-			}
+			collector.ChannelMessagesReceived.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Received))
+			collector.ChannelMessagesSent.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Sent))
+			collector.ChannelMessagesErrored.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Error))
+			collector.ChannelMessagesQueued.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Queued))
+			collector.ChannelMessagesFiltered.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Filtered))
 		}
 	}
 

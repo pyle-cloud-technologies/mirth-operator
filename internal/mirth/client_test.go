@@ -97,29 +97,8 @@ func TestGetChannelStatuses(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/channels/statuses", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(DashboardStatusListResponse{
-			List: &DashboardStatusList{
-				DashboardStatuses: []DashboardStatus{
-					{
-						ChannelID: "ch-1",
-						Name:      "HL7 Inbound",
-						State:     "STARTED",
-						Statistics: &ChannelStatistics{
-							Received: 100,
-							Sent:     95,
-							Error:    5,
-							Filtered: 0,
-							Queued:   2,
-						},
-					},
-					{
-						ChannelID: "ch-2",
-						Name:      "FHIR Outbound",
-						State:     "STOPPED",
-					},
-				},
-			},
-		})
+		resp := `{"list":{"dashboardStatus":[{"channelId":"ch-1","name":"HL7 Inbound","state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":100},{"com.mirth.connect.donkey.model.message.Status":"SENT","long":95},{"com.mirth.connect.donkey.model.message.Status":"ERROR","long":5},{"com.mirth.connect.donkey.model.message.Status":"QUEUED","long":2}]}},{"channelId":"ch-2","name":"FHIR Outbound","state":"STOPPED"}]}}`
+		_, _ = w.Write([]byte(resp))
 	})
 
 	client := newTestServer(t, mux)
@@ -137,8 +116,9 @@ func TestGetChannelStatuses(t *testing.T) {
 	if statuses[1].State != "STOPPED" {
 		t.Errorf("expected STOPPED, got %s", statuses[1].State)
 	}
-	if statuses[0].Statistics.Received != 100 {
-		t.Errorf("expected 100 received, got %d", statuses[0].Statistics.Received)
+	stats := statuses[0].ParseStatistics()
+	if stats.Received != 100 {
+		t.Errorf("expected 100 received, got %d", stats.Received)
 	}
 }
 

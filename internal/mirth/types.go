@@ -16,6 +16,8 @@ limitations under the License.
 
 package mirth
 
+import "encoding/json"
+
 // ServerStatusResponse represents the Mirth Connect server status response.
 // GET /api/server/status returns {"int": N} where N is:
 // 0=STARTED, 1=PAUSING, 2=PAUSED, 3=STOPPING, 4=STOPPED
@@ -69,14 +71,20 @@ type DashboardStatusList struct {
 	DashboardStatuses []DashboardStatus `json:"dashboardStatus"`
 }
 
+// MirthTimestamp represents Mirth's timestamp format: {"time": epoch_ms, "timezone": "..."}
+type MirthTimestamp struct {
+	Time     int64  `json:"time"`
+	Timezone string `json:"timezone"`
+}
+
 // DashboardStatus represents a single channel's dashboard status from Mirth.
 type DashboardStatus struct {
-	ChannelID     string             `json:"channelId"`
-	Name          string             `json:"name"`
-	State         string             `json:"state"` // STARTED, STOPPED, PAUSED, ERROR
-	DeployedDate  string             `json:"deployedDate,omitempty"`
-	Statistics    *ChannelStatistics `json:"statistics,omitempty"`
-	ChildStatuses []ConnectorStatus  `json:"childStatuses,omitempty"`
+	ChannelID     string          `json:"channelId"`
+	Name          string          `json:"name"`
+	State         string          `json:"state"` // STARTED, STOPPED, PAUSED, ERROR
+	DeployedDate  *MirthTimestamp `json:"deployedDate,omitempty"`
+	Statistics    json.RawMessage `json:"statistics,omitempty"`
+	ChildStatuses json.RawMessage `json:"childStatuses,omitempty"`
 }
 
 // ConnectorStatus represents a connector (source or destination) status.
@@ -89,8 +97,7 @@ type ConnectorStatus struct {
 	Queued     int64              `json:"queued"`
 }
 
-// ChannelStatistics represents the message statistics for a channel.
-// GET /api/channels/{id}/statistics
+// ChannelStatistics represents parsed message statistics for a channel.
 type ChannelStatistics struct {
 	ChannelID string `json:"channelId,omitempty"`
 	Received  int64  `json:"received"`
@@ -98,4 +105,43 @@ type ChannelStatistics struct {
 	Error     int64  `json:"error"`
 	Filtered  int64  `json:"filtered"`
 	Queued    int64  `json:"queued"`
+}
+
+// mirthStatisticsRaw is the raw Mirth statistics format with entry arrays.
+type mirthStatisticsRaw struct {
+	Entries []mirthStatEntry `json:"entry"`
+}
+
+type mirthStatEntry struct {
+	Status string `json:"com.mirth.connect.donkey.model.message.Status"`
+	Value  int64  `json:"long"`
+}
+
+// ParseStatistics extracts ChannelStatistics from the raw Mirth JSON format.
+func (d *DashboardStatus) ParseStatistics() ChannelStatistics {
+	stats := ChannelStatistics{ChannelID: d.ChannelID}
+	if d.Statistics == nil {
+		return stats
+	}
+
+	var raw mirthStatisticsRaw
+	if err := json.Unmarshal(d.Statistics, &raw); err != nil {
+		return stats
+	}
+
+	for _, e := range raw.Entries {
+		switch e.Status {
+		case "RECEIVED":
+			stats.Received = e.Value
+		case "SENT":
+			stats.Sent = e.Value
+		case "ERROR":
+			stats.Error = e.Value
+		case "FILTERED":
+			stats.Filtered = e.Value
+		case "QUEUED":
+			stats.Queued = e.Value
+		}
+	}
+	return stats
 }
