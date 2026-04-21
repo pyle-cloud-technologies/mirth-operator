@@ -153,9 +153,10 @@ func main() {
 	}
 
 	if err := (&controller.MirthInstanceReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("mirth-operator"), //nolint:staticcheck // TODO: migrate to GetEventRecorder when available
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		//nolint:staticcheck // TODO: migrate to GetEventRecorder when available
+		Recorder: mgr.GetEventRecorderFor("mirth-operator"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "MirthInstance")
 		os.Exit(1)

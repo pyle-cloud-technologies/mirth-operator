@@ -24,6 +24,8 @@ import (
 	"testing"
 )
 
+const stateStarted = "STARTED"
+
 func newTestServer(t *testing.T, handler http.Handler) Client {
 	t.Helper()
 	server := httptest.NewServer(handler)
@@ -64,7 +66,7 @@ func TestGetServerStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if status.ServerStatusString() != "STARTED" {
+	if status.ServerStatusString() != stateStarted {
 		t.Errorf("expected STARTED, got %s", status.ServerStatusString())
 	}
 }
@@ -110,7 +112,7 @@ func TestGetChannelStatuses(t *testing.T) {
 	if len(statuses) != 2 {
 		t.Fatalf("expected 2 statuses, got %d", len(statuses))
 	}
-	if statuses[0].State != "STARTED" {
+	if statuses[0].State != stateStarted {
 		t.Errorf("expected STARTED, got %s", statuses[0].State)
 	}
 	if statuses[1].State != "STOPPED" {
