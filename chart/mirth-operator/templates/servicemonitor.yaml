@@ -20,6 +20,7 @@ spec:
     - port: metrics
       interval: {{ .Values.metrics.serviceMonitor.interval }}
       path: /metrics
+      honorLabels: true
       {{- if .Values.metrics.secure }}
       scheme: https
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token

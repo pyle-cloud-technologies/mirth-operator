@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -12,18 +15,26 @@
       }
     ]
   },
-  "description": "Mirth Operator — reconciliation health, channel state, throughput, queue depth, remediation, and deploy errors across managed MirthInstance CRs.",
+  "description": "Mirth Operator \u2014 reconciliation health, channel state, throughput, queue depth, remediation, and deploy errors across managed MirthInstance CRs.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "liveNow": false,
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["mirth", "operator", "integrations"],
+  "tags": [
+    "mirth",
+    "operator",
+    "integrations"
+  ],
   "templating": {
     "list": [
       {
-        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "current": {
+          "selected": false,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
@@ -39,8 +50,15 @@
       },
       {
         "allValue": ".*",
-        "current": { "selected": true, "text": "All", "value": "$__all" },
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "definition": "label_values(mirth_up, instance)",
         "hide": 0,
         "includeAll": true,
@@ -48,7 +66,10 @@
         "multi": true,
         "name": "instance",
         "options": [],
-        "query": { "query": "label_values(mirth_up, instance)", "refId": "PrometheusVariableQueryEditor-VariableQuery" },
+        "query": {
+          "query": "label_values(mirth_up, instance)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -57,8 +78,15 @@
       },
       {
         "allValue": ".*",
-        "current": { "selected": true, "text": "All", "value": "$__all" },
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "definition": "label_values(mirth_channel_status{instance=~\"$instance\"}, channel)",
         "hide": 0,
         "includeAll": true,
@@ -66,7 +94,10 @@
         "multi": true,
         "name": "channel",
         "options": [],
-        "query": { "query": "label_values(mirth_channel_status{instance=~\"$instance\"}, channel)", "refId": "PrometheusVariableQueryEditor-VariableQuery" },
+        "query": {
+          "query": "label_values(mirth_channel_status{instance=~\"$instance\"}, channel)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -75,18 +106,26 @@
       }
     ]
   },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "",
   "title": "Mirth Operator",
   "uid": "mirth-operator",
-  "version": 1,
+  "version": 2,
   "weekStart": "",
   "panels": [
     {
       "type": "row",
       "title": "Overview",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 100,
       "collapsed": false,
       "panels": []
@@ -95,18 +134,34 @@
       "type": "stat",
       "title": "Instances Up",
       "description": "Count of MirthInstance CRs whose REST API is currently reachable.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
       "id": 1,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
             ]
           },
           "unit": "short"
@@ -118,23 +173,46 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
-        { "expr": "sum(mirth_up{instance=~\"$instance\"})", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum(mirth_up{instance=~\"$instance\"})",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "stat",
       "title": "Total Channels",
       "description": "Sum of deployed channels across selected Mirth instances.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
       "id": 2,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "mappings": [],
           "unit": "short"
         }
@@ -142,28 +220,60 @@
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
-        { "expr": "sum(mirth_channels_total{instance=~\"$instance\"})", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum(mirth_channels_total{instance=~\"$instance\"})",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "stat",
       "title": "Healthy Channels",
       "description": "Channels currently in STARTED state.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
       "id": 3,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "green", "value": 2 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
             ]
           },
           "unit": "short"
@@ -172,28 +282,60 @@
       "options": {
         "colorMode": "background",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
-        { "expr": "sum(mirth_channels_healthy{instance=~\"$instance\"})", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum(mirth_channels_healthy{instance=~\"$instance\"})",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "stat",
       "title": "Unhealthy Channels",
       "description": "Channels not in STARTED state (total - healthy).",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
       "id": 4,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 3 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
             ]
           },
           "unit": "short"
@@ -202,28 +344,60 @@
       "options": {
         "colorMode": "background",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
-        { "expr": "clamp_min(sum(mirth_channels_total{instance=~\"$instance\"}) - sum(mirth_channels_healthy{instance=~\"$instance\"}), 0)", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "clamp_min(sum(mirth_channels_total{instance=~\"$instance\"}) - sum(mirth_channels_healthy{instance=~\"$instance\"}), 0)",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "stat",
       "title": "Queue Depth",
       "description": "Sum of pending messages queued across all selected channels.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
       "id": 5,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 100 },
-              { "color": "red", "value": 1000 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
             ]
           },
           "unit": "short"
@@ -232,38 +406,255 @@
       "options": {
         "colorMode": "background",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
-        { "expr": "sum(mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"})", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum(mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"})",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "stat",
       "title": "JVM Heap Used",
       "description": "Aggregate JVM heap in use across selected instances.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
       "id": 6,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "continuous-BlPu" },
+          "color": {
+            "mode": "continuous-BlPu"
+          },
           "unit": "bytes"
         }
       },
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
-        { "expr": "sum(mirth_jvm_heap_used_bytes{instance=~\"$instance\"})", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum(mirth_jvm_heap_used_bytes{instance=~\"$instance\"})",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Delivery Success",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 104,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Messages Delivered / 5m",
+      "description": "Sum of successfully sent messages across selected channels over the last 5 minutes.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
+      "id": 105,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(clamp_min(delta(mirth_channel_messages_sent_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0))",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Success Rate",
+      "description": "Percent of messages delivered successfully over the selected range: sent / (sent + errored). Green \u2265 99%, yellow \u2265 95%, red below.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 106,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 99
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "(sum(clamp_min(delta(mirth_channel_messages_sent_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range]), 0)) / clamp_min(sum(clamp_min(delta(mirth_channel_messages_sent_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range]), 0)) + sum(clamp_min(delta(mirth_channel_messages_errored_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range]), 0)), 1)) * 100",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Messages Received / 5m",
+      "description": "Sum of messages received (input side) across selected channels over the last 5 minutes. Compare against Delivered to spot drop-off.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 107,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(clamp_min(delta(mirth_channel_messages_received_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0))",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "row",
       "title": "Channel Throughput",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
       "id": 101,
       "collapsed": false,
       "panels": []
@@ -272,12 +663,22 @@
       "type": "timeseries",
       "title": "Messages Received / 5m",
       "description": "Delta of messages received per channel over 5m windows.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
       "id": 10,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 15,
@@ -287,29 +688,61 @@
             "pointSize": 4,
             "showPoints": "never",
             "spanNulls": true,
-            "stacking": { "mode": "none", "group": "A" }
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
           },
           "unit": "short"
         }
       },
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "clamp_min(delta(mirth_channel_messages_received_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "clamp_min(delta(mirth_channel_messages_received_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Messages Sent / 5m",
       "description": "Delta of messages sent per channel over 5m windows.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
       "id": 11,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 15,
@@ -323,52 +756,113 @@
         }
       },
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "clamp_min(delta(mirth_channel_messages_sent_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "clamp_min(delta(mirth_channel_messages_sent_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Errored Messages / 5m",
       "description": "Delta of errored messages per channel over 5m windows. Spikes mean trouble.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
       "id": 12,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "continuous-RdYlGr" },
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 80,
             "gradientMode": "hue",
             "lineWidth": 0,
             "showPoints": "never",
-            "stacking": { "mode": "normal", "group": "A" }
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
           },
           "unit": "short"
         }
       },
       "options": {
-        "legend": { "calcs": ["sum", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "clamp_min(delta(mirth_channel_messages_errored_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "clamp_min(delta(mirth_channel_messages_errored_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]), 0)",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Queue Depth by Channel",
       "description": "Current pending messages per channel. Sustained growth indicates a stuck downstream.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
       "id": 13,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 25,
@@ -382,17 +876,41 @@
         }
       },
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"}", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"}",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "row",
       "title": "Channel Health",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
       "id": 102,
       "collapsed": false,
       "panels": []
@@ -400,88 +918,235 @@
     {
       "type": "state-timeline",
       "title": "Channel State Timeline",
-      "description": "State over time for each channel — green STARTED, yellow PAUSED, red STOPPED/UNKNOWN.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 },
+      "description": "State over time per channel. Encoded 1=STARTED, 2=PAUSED, 3=STOPPED, 4=ERROR, 5=UNKNOWN \u2014 value-mapped to names + colors.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
       "id": 20,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "custom": { "fillOpacity": 80, "lineWidth": 0 },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 90,
+            "lineWidth": 0
+          },
           "mappings": [
-            { "type": "value", "options": { "STARTED": { "color": "green", "index": 0 }, "PAUSED": { "color": "yellow", "index": 1 }, "STOPPED": { "color": "red", "index": 2 }, "UNKNOWN": { "color": "purple", "index": 3 } } }
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "STARTED"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "2": {
+                  "color": "yellow",
+                  "index": 1,
+                  "text": "PAUSED"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "3": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "STOPPED"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "4": {
+                  "color": "red",
+                  "index": 3,
+                  "text": "ERROR"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "5": {
+                  "color": "purple",
+                  "index": 4,
+                  "text": "UNKNOWN"
+                }
+              }
+            }
           ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              }
+            ]
+          }
         }
       },
       "options": {
         "alignValue": "left",
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "auto",
-        "tooltip": { "mode": "single", "sort": "none" }
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "targets": [
-        { "expr": "label_replace(label_replace(mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\"} == 1, \"series\", \"$1\", \"channel\", \"(.+)\"), \"\", \"\", \"\", \"\")", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
-      ],
-      "transformations": [
-        { "id": "renameByRegex", "options": { "regex": ".*channel=\"([^\"]+)\".*state=\"([^\"]+)\".*", "renamePattern": "$1" } }
+        {
+          "expr": "sum without(state) (mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\",state=\"STARTED\"} * 1 == 1) or sum without(state) (mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\",state=\"PAUSED\"} * 2 == 2) or sum without(state) (mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\",state=\"STOPPED\"} * 3 == 3) or sum without(state) (mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\",state=\"ERROR\"} * 4 == 4) or sum without(state) (mirth_channel_status{instance=~\"$instance\",channel=~\"$channel\",state=\"UNKNOWN\"} * 5 == 5)",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "bargauge",
       "title": "Top 10 Channels by Errors (range)",
       "description": "Channels with the most errored messages in the selected time range.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
       "id": 21,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "continuous-RdYlGr" },
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 100 }] },
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
           "unit": "short"
         }
       },
       "options": {
         "displayMode": "gradient",
         "orientation": "horizontal",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showUnfilled": true,
         "valueMode": "color"
       },
       "targets": [
-        { "expr": "topk(10, clamp_min(sum by (channel) (delta(mirth_channel_messages_errored_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range])), 0))", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "topk(10, clamp_min(sum by (channel) (delta(mirth_channel_messages_errored_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range])), 0))",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "bargauge",
       "title": "Top 10 Channels by Queue Depth",
       "description": "Deepest queues right now.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
       "id": 22,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "continuous-YlBl" },
+          "color": {
+            "mode": "continuous-YlBl"
+          },
           "unit": "short"
         }
       },
       "options": {
         "displayMode": "gradient",
         "orientation": "horizontal",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showUnfilled": true,
         "valueMode": "color"
       },
       "targets": [
-        { "expr": "topk(10, sum by (channel) (mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"}))", "legendFormat": "{{channel}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "topk(10, sum by (channel) (mirth_channel_messages_queued{instance=~\"$instance\",channel=~\"$channel\"}))",
+          "legendFormat": "{{channel}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "row",
       "title": "Operator Actions & Errors",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 48
+      },
       "id": 103,
       "collapsed": false,
       "panels": []
@@ -490,94 +1155,235 @@
       "type": "timeseries",
       "title": "Remediation Attempts / 5m",
       "description": "Rate of operator remediation attempts, bucketed by result (success/failure/etc).",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 49
+      },
       "id": 30,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 70,
             "lineWidth": 0,
-            "stacking": { "mode": "normal", "group": "A" }
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
           },
           "unit": "short"
         }
       },
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "sum by (result) (rate(mirth_remediation_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]) * 300)", "legendFormat": "{{result}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum by (result) (rate(mirth_remediation_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]) * 300)",
+          "legendFormat": "{{result}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Deploy Errors / 5m",
       "description": "Compile, deploy, or script error events surfaced from Mirth's /api/events endpoint.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 49
+      },
       "id": 31,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 70,
             "lineWidth": 0,
-            "stacking": { "mode": "normal", "group": "A" }
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
           },
           "unit": "short"
         }
       },
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "sum by (event_name) (rate(mirth_deploy_errors_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]) * 300)", "legendFormat": "{{event_name}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "sum by (event_name) (rate(mirth_deploy_errors_total{instance=~\"$instance\",channel=~\"$channel\"}[5m]) * 300)",
+          "legendFormat": "{{event_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     },
     {
       "type": "table",
       "title": "Recent Deploy Errors (top by count)",
       "description": "Deploy-error counters aggregated over the dashboard time range, grouped by channel and event.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 51 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 57
+      },
       "id": 32,
       "fieldConfig": {
         "defaults": {
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" } }
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-RdYlGr" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-RdYlGr"
+                }
+              }
+            ]
+          }
         ]
       },
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "Value" }]
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
       },
       "targets": [
-        { "expr": "topk(20, sum by (instance, channel, event_name) (increase(mirth_deploy_errors_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range])))", "format": "table", "instant": true, "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "topk(20, sum by (instance, channel, event_name) (increase(mirth_deploy_errors_total{instance=~\"$instance\",channel=~\"$channel\"}[$__range])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ],
       "transformations": [
-        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "job": true }, "renameByName": { "instance": "Instance", "channel": "Channel", "event_name": "Event", "Value": "Count" } } }
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true
+            },
+            "renameByName": {
+              "instance": "Instance",
+              "channel": "Channel",
+              "event_name": "Event",
+              "Value": "Count"
+            }
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "JVM Heap Used",
       "description": "Heap memory in use per Mirth instance.",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 51 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 57
+      },
       "id": 33,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 20,
@@ -591,11 +1397,30 @@
         }
       },
       "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
-        { "expr": "mirth_jvm_heap_used_bytes{instance=~\"$instance\"}", "legendFormat": "{{instance}}", "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+        {
+          "expr": "mirth_jvm_heap_used_bytes{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          }
+        }
       ]
     }
   ]
