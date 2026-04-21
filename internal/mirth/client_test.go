@@ -152,6 +152,61 @@ func TestGetChannelStatistics(t *testing.T) {
 	}
 }
 
+func TestGetEvents(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/events", func(w http.ResponseWriter, r *http.Request) {
+		if got := r.URL.Query().Get("minEventId"); got != "42" {
+			t.Errorf("expected minEventId=42, got %q", got)
+		}
+		if got := r.URL.Query().Get("limit"); got != "50" {
+			t.Errorf("expected limit=50, got %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		resp := `{"list":{"event":[
+			{"id":43,"level":"ERROR","name":"Channel Deployed","outcome":"FAILURE","userId":1,"dateTime":"2026-04-21T10:00:00Z","attributes":{"channelId":"evt-ch","channelName":"Events Channel"}},
+			{"id":44,"level":"INFO","name":"Server Startup","outcome":"SUCCESS","userId":1,"dateTime":"2026-04-21T10:01:00Z","attributes":{}}
+		]}}`
+		_, _ = w.Write([]byte(resp))
+	})
+
+	client := newTestServer(t, mux)
+
+	events, err := client.GetEvents(context.Background(), 42, 50)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(events) != 2 {
+		t.Fatalf("expected 2 events, got %d", len(events))
+	}
+
+	if !events[0].IsDeployError() {
+		t.Error("expected first event (Channel Deployed / ERROR) to be flagged as deploy error")
+	}
+	if events[1].IsDeployError() {
+		t.Error("expected second event (Server Startup / INFO) not to be flagged")
+	}
+
+	id, name := events[0].ChannelRef()
+	if id != "evt-ch" || name != "Events Channel" {
+		t.Errorf("expected channel ref evt-ch/Events Channel, got %s/%s", id, name)
+	}
+}
+
+func TestGetEventsServerError(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/events", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("boom"))
+	})
+
+	client := newTestServer(t, mux)
+
+	_, err := client.GetEvents(context.Background(), 0, 10)
+	if err == nil {
+		t.Fatal("expected error for 500 response")
+	}
+}
+
 func TestRestartChannel(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/channels/{id}/_restart", func(w http.ResponseWriter, r *http.Request) {

@@ -41,6 +41,7 @@ type Collector struct {
 	ChannelsHealthy         *prometheus.GaugeVec
 	RemediationTotal        *prometheus.CounterVec
 	JVMHeapUsedBytes        *prometheus.GaugeVec
+	DeployErrorsTotal       *prometheus.CounterVec
 }
 
 // GetCollector returns the singleton metrics collector, registering it on first call.
@@ -59,6 +60,7 @@ func GetCollector() *Collector {
 			collector.ChannelsHealthy,
 			collector.RemediationTotal,
 			collector.JVMHeapUsedBytes,
+			collector.DeployErrorsTotal,
 		)
 	})
 	return collector
@@ -120,6 +122,11 @@ func newCollector() *Collector {
 			Name: "mirth_jvm_heap_used_bytes",
 			Help: "JVM heap memory used in bytes.",
 		}, []string{"instance"}),
+
+		DeployErrorsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "mirth_deploy_errors_total",
+			Help: "Deploy, compile, or script error events reported by the Mirth /api/events endpoint.",
+		}, []string{"instance", "channel", "event_name"}),
 	}
 }
 
@@ -135,4 +142,5 @@ func (c *Collector) ResetInstance(instance string) {
 	c.ChannelsTotal.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelsHealthy.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.JVMHeapUsedBytes.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DeployErrorsTotal.DeletePartialMatch(prometheus.Labels{"instance": instance})
 }

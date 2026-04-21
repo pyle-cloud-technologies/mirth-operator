@@ -92,6 +92,25 @@ spec:
                 description: monitoring configures how often to poll Mirth and whether
                   to expose Prometheus metrics.
                 properties:
+                  events:
+                    description: |-
+                      events configures polling of the OIE /api/events endpoint for
+                      deploy/script/compile errors that are otherwise invisible when a
+                      channel reports STARTED but has broken scripts.
+                    properties:
+                      enabled:
+                        description: |-
+                          enabled turns on /api/events polling. Off by default because the
+                          endpoint shape is not guaranteed across all Mirth/OIE builds.
+                        type: boolean
+                      lookbackLimit:
+                        default: 100
+                        description: lookbackLimit caps the number of events fetched
+                          per poll.
+                        maximum: 1000
+                        minimum: 1
+                        type: integer
+                    type: object
                   intervalSeconds:
                     default: 30
                     description: intervalSeconds is how often (in seconds) the operator
@@ -213,7 +232,7 @@ spec:
               conditions:
                 description: |-
                   conditions represent the current state of the MirthInstance.
-                  Condition types: Connected, AllChannelsHealthy, RemediationActive
+                  Condition types: Connected, AllChannelsHealthy, RemediationActive, DeployErrorsDetected
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

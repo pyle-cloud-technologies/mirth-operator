@@ -32,6 +32,7 @@ type Client interface {
 	GetSystemStats(ctx context.Context) (*SystemStats, error)
 	GetChannelStatuses(ctx context.Context) ([]DashboardStatus, error)
 	GetChannelStatistics(ctx context.Context, channelID string) (*ChannelStatistics, error)
+	GetEvents(ctx context.Context, sinceID int64, limit int) ([]ServerEvent, error)
 	RestartChannel(ctx context.Context, channelID string) error
 	StartChannel(ctx context.Context, channelID string) error
 }
@@ -158,6 +159,23 @@ func (c *httpClient) GetChannelStatistics(ctx context.Context, channelID string)
 	}
 
 	return &stats, nil
+}
+
+func (c *httpClient) GetEvents(ctx context.Context, sinceID int64, limit int) ([]ServerEvent, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	path := fmt.Sprintf("/api/events?offset=0&limit=%d&minEventId=%d", limit, sinceID)
+	body, err := c.doRequest(ctx, http.MethodGet, path)
+	if err != nil {
+		return nil, fmt.Errorf("getting events: %w", err)
+	}
+
+	events, err := ParseServerEvents(body)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling events: %w", err)
+	}
+	return events, nil
 }
 
 func (c *httpClient) RestartChannel(ctx context.Context, channelID string) error {

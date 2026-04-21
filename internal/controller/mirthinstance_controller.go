@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -44,6 +45,13 @@ type MirthInstanceReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+
+	// lastEventID tracks the highest OIE event id already observed for each
+	// instance, so /api/events polling only returns new events per reconcile.
+	// State lives only for the operator process lifetime; on restart a
+	// bounded replay is fine because DeployErrorsTotal is a counter.
+	lastEventIDMu sync.Mutex
+	lastEventID   map[types.NamespacedName]int64
 }
 
 // +kubebuilder:rbac:groups=mirth.pyle.io,resources=mirthinstances,verbs=get;list;watch;create;update;patch;delete
@@ -187,7 +195,14 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		collector.ChannelsHealthy.WithLabelValues(instanceName).Set(float64(summary.Started))
 	}
 
-	// 9. Evaluate health
+	// 9. Poll /api/events for deploy/script/compile errors. A channel can
+	// report STARTED while holding a broken script; the events endpoint is
+	// the only signal that surfaces those failures.
+	if instance.Spec.Monitoring.Events.Enabled {
+		r.pollEvents(ctx, req.NamespacedName, mirthCli, &instance, instanceName, collector)
+	}
+
+	// 10. Evaluate health
 	allHealthy := summary.Total > 0 && summary.Started == summary.Total
 	if allHealthy {
 		r.setCondition(&instance, "AllChannelsHealthy", metav1.ConditionTrue, "AllStarted", "All channels are in STARTED state")
@@ -197,7 +212,7 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				summary.Total-summary.Started, summary.Total, summary.Stopped, summary.Errored, summary.Paused))
 	}
 
-	// 10. Remediation
+	// 11. Remediation
 	if instance.Spec.Remediation.Enabled {
 		r.setCondition(&instance, "RemediationActive", metav1.ConditionTrue, "Enabled", "Automatic remediation is active")
 
@@ -235,11 +250,79 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setCondition(&instance, "RemediationActive", metav1.ConditionFalse, "Disabled", "Automatic remediation is disabled")
 	}
 
-	// 11. Update status
+	// 12. Update status
 	now := metav1.Now()
 	instance.Status.LastChecked = &now
 
 	return r.updateStatusAndRequeue(ctx, &instance)
+}
+
+// pollEvents fetches new OIE server events since the last observed ID,
+// increments DeployErrorsTotal for each event classified as a deploy or
+// script error, and updates the DeployErrorsDetected condition. Failures
+// are logged but non-fatal — the rest of the reconcile is still useful.
+func (r *MirthInstanceReconciler) pollEvents(
+	ctx context.Context,
+	key types.NamespacedName,
+	cli mirthclient.Client,
+	instance *mirthv1alpha1.MirthInstance,
+	instanceName string,
+	collector *metrics.Collector,
+) {
+	log := logf.FromContext(ctx)
+
+	limit := instance.Spec.Monitoring.Events.LookbackLimit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	r.lastEventIDMu.Lock()
+	if r.lastEventID == nil {
+		r.lastEventID = make(map[types.NamespacedName]int64)
+	}
+	cursor := r.lastEventID[key]
+	r.lastEventIDMu.Unlock()
+
+	events, err := cli.GetEvents(ctx, cursor, limit)
+	if err != nil {
+		log.Error(err, "Failed to poll Mirth /api/events; deploy-error detection disabled for this reconcile")
+		return
+	}
+
+	var (
+		errorCount int
+		maxID      = cursor
+	)
+	for _, e := range events {
+		if e.ID > maxID {
+			maxID = e.ID
+		}
+		if !e.IsDeployError() {
+			continue
+		}
+		errorCount++
+		if instance.Spec.Monitoring.Metrics.Enabled {
+			_, channelName := e.ChannelRef()
+			if channelName == "" {
+				channelName = "<unknown>"
+			}
+			collector.DeployErrorsTotal.WithLabelValues(instanceName, channelName, e.Name).Inc()
+		}
+	}
+
+	if maxID > cursor {
+		r.lastEventIDMu.Lock()
+		r.lastEventID[key] = maxID
+		r.lastEventIDMu.Unlock()
+	}
+
+	if errorCount > 0 {
+		r.setCondition(instance, "DeployErrorsDetected", metav1.ConditionTrue, "ErrorEventsObserved",
+			fmt.Sprintf("%d deploy/script error event(s) observed via /api/events", errorCount))
+	} else {
+		r.setCondition(instance, "DeployErrorsDetected", metav1.ConditionFalse, "NoErrorEvents",
+			"No deploy/script error events observed in the latest /api/events window")
+	}
 }
 
 func (r *MirthInstanceReconciler) updateStatusAndRequeue(ctx context.Context, instance *mirthv1alpha1.MirthInstance) (ctrl.Result, error) {
@@ -268,6 +351,9 @@ func (r *MirthInstanceReconciler) setCondition(instance *mirthv1alpha1.MirthInst
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MirthInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.lastEventID == nil {
+		r.lastEventID = make(map[types.NamespacedName]int64)
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mirthv1alpha1.MirthInstance{}).
 		Named("mirthinstance").

@@ -81,6 +81,12 @@ type MonitoringSpec struct {
 	// metrics configures Prometheus metrics exposure.
 	// +optional
 	Metrics MetricsSpec `json:"metrics,omitempty"`
+
+	// events configures polling of the OIE /api/events endpoint for
+	// deploy/script/compile errors that are otherwise invisible when a
+	// channel reports STARTED but has broken scripts.
+	// +optional
+	Events EventsSpec `json:"events,omitempty"`
 }
 
 // MetricsSpec configures Prometheus metrics.
@@ -89,6 +95,21 @@ type MetricsSpec struct {
 	// +kubebuilder:default=true
 	// +optional
 	Enabled bool `json:"enabled,omitempty"`
+}
+
+// EventsSpec configures OIE /api/events polling.
+type EventsSpec struct {
+	// enabled turns on /api/events polling. Off by default because the
+	// endpoint shape is not guaranteed across all Mirth/OIE builds.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// lookbackLimit caps the number of events fetched per poll.
+	// +kubebuilder:default=100
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=1000
+	// +optional
+	LookbackLimit int `json:"lookbackLimit,omitempty"`
 }
 
 // RemediationSpec configures automatic channel remediation.
@@ -124,7 +145,7 @@ type RemediationSpec struct {
 // MirthInstanceStatus defines the observed state of MirthInstance.
 type MirthInstanceStatus struct {
 	// conditions represent the current state of the MirthInstance.
-	// Condition types: Connected, AllChannelsHealthy, RemediationActive
+	// Condition types: Connected, AllChannelsHealthy, RemediationActive, DeployErrorsDetected
 	// +listType=map
 	// +listMapKey=type
 	// +optional

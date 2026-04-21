@@ -16,7 +16,10 @@ limitations under the License.
 
 package mirth
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // ServerStatusResponse represents the Mirth Connect server status response.
 // GET /api/server/status returns {"int": N} where N is:
@@ -52,12 +55,12 @@ type SystemStatsResponse struct {
 // SystemStats represents the Mirth Connect system statistics.
 type SystemStats struct {
 	Timestamp     map[string]any `json:"timestamp"`
-	FreeMemory    int64                  `json:"freeMemoryBytes"`
-	AllocMemory   int64                  `json:"allocatedMemoryBytes"`
-	MaxMemory     int64                  `json:"maxMemoryBytes"`
-	CPUUsagePct   float64                `json:"cpuUsagePct"`
-	DiskFreeBytes int64                  `json:"diskFreeBytes"`
-	DiskTotal     int64                  `json:"diskTotalBytes"`
+	FreeMemory    int64          `json:"freeMemoryBytes"`
+	AllocMemory   int64          `json:"allocatedMemoryBytes"`
+	MaxMemory     int64          `json:"maxMemoryBytes"`
+	CPUUsagePct   float64        `json:"cpuUsagePct"`
+	DiskFreeBytes int64          `json:"diskFreeBytes"`
+	DiskTotal     int64          `json:"diskTotalBytes"`
 }
 
 // DashboardStatusListResponse is the top-level response from GET /api/channels/statuses.
@@ -115,6 +118,100 @@ type mirthStatisticsRaw struct {
 type mirthStatEntry struct {
 	Status string `json:"com.mirth.connect.donkey.model.message.Status"`
 	Value  int64  `json:"long"`
+}
+
+// ServerEventListResponse is the top-level envelope from GET /api/events.
+// OIE wraps the list as {"list": {"event": [...]}}, matching the pattern used
+// for channel statuses. Some builds may return the event(s) under a different
+// top-level shape; ServerEventListResponse and ParseServerEvents together
+// tolerate both the list-envelope and a bare array shape.
+type ServerEventListResponse struct {
+	List *ServerEventList `json:"list"`
+}
+
+// ServerEventList is the inner object wrapping the event slice.
+type ServerEventList struct {
+	Events []ServerEvent `json:"event"`
+}
+
+// ServerEvent is a single OIE server event. Fields mirror the shape returned
+// by GET /api/events in OIE / Mirth Connect 4.x. Attributes is a free-form
+// map populated with event-specific keys (commonly "channel", "channelId",
+// "channelName").
+type ServerEvent struct {
+	ID         int64             `json:"id"`
+	Level      string            `json:"level"`   // INFO / WARNING / ERROR
+	Name       string            `json:"name"`    // e.g. "Channel Deployed"
+	Outcome    string            `json:"outcome"` // SUCCESS / FAILURE
+	UserID     int               `json:"userId"`
+	DateTime   string            `json:"dateTime"`
+	Attributes map[string]string `json:"attributes"`
+}
+
+// IsDeployError reports whether this event represents a channel deploy,
+// script compile, or transformer/filter script failure. Matching is
+// deliberately loose because OIE event naming varies — the upstream event ID
+// guarantees we only count each event once even when the rule matches broadly.
+func (e ServerEvent) IsDeployError() bool {
+	level := strings.ToUpper(e.Level)
+	outcome := strings.ToUpper(e.Outcome)
+	name := strings.ToLower(e.Name)
+
+	nameLooksDeployRelated := strings.Contains(name, "deploy") ||
+		strings.Contains(name, "compile") ||
+		strings.Contains(name, "script")
+
+	if level == "ERROR" && nameLooksDeployRelated {
+		return true
+	}
+	if outcome == "FAILURE" && nameLooksDeployRelated {
+		return true
+	}
+	return false
+}
+
+// ChannelRef returns the channel id and name recorded on the event, if any.
+// Keys vary across OIE builds, so multiple common attribute keys are tried.
+// Either return value may be empty when the event is server-wide.
+func (e ServerEvent) ChannelRef() (id, name string) {
+	if e.Attributes == nil {
+		return "", ""
+	}
+	for _, k := range []string{"channelId", "channel_id", "channelID"} {
+		if v, ok := e.Attributes[k]; ok && v != "" {
+			id = v
+			break
+		}
+	}
+	for _, k := range []string{"channelName", "channel_name", "channel"} {
+		if v, ok := e.Attributes[k]; ok && v != "" {
+			name = v
+			break
+		}
+	}
+	return id, name
+}
+
+// ParseServerEvents unmarshals an /api/events response, tolerating both the
+// {"list":{"event":[...]}} envelope and a bare [...] array.
+func ParseServerEvents(body []byte) ([]ServerEvent, error) {
+	trimmed := strings.TrimLeft(string(body), " \t\r\n")
+	if strings.HasPrefix(trimmed, "[") {
+		var events []ServerEvent
+		if err := json.Unmarshal(body, &events); err != nil {
+			return nil, err
+		}
+		return events, nil
+	}
+
+	var resp ServerEventListResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+	if resp.List == nil {
+		return nil, nil
+	}
+	return resp.List.Events, nil
 }
 
 // ParseStatistics extracts ChannelStatistics from the raw Mirth JSON format.

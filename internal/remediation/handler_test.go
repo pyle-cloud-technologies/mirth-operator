@@ -59,6 +59,10 @@ func (m *mockClient) GetChannelStatistics(_ context.Context, _ string) (*mirth.C
 	return &mirth.ChannelStatistics{}, nil
 }
 
+func (m *mockClient) GetEvents(_ context.Context, _ int64, _ int) ([]mirth.ServerEvent, error) {
+	return nil, nil
+}
+
 func (m *mockClient) StartChannel(_ context.Context, id string) error {
 	m.startCalled[id]++
 	if m.failChannels[id] {
