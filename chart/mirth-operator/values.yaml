@@ -49,3 +49,20 @@ metrics:
 
 healthProbe:
   port: 8081
+
+# grafanaDashboard provisions the Mirth Operator dashboard as a ConfigMap.
+# Grafana's sidecar (e.g. kube-prometheus-stack's grafana chart) auto-imports
+# ConfigMaps matching sidecarLabel=sidecarLabelValue in the namespaces it watches.
+grafanaDashboard:
+  enabled: false
+  # Namespace where the ConfigMap is created. Must be one the Grafana sidecar
+  # watches. kube-prometheus-stack defaults to searching all namespaces when
+  # sidecar.dashboards.searchNamespace=ALL; otherwise set this to the Grafana
+  # release namespace (commonly "monitoring").
+  namespace: ""
+  # Label key/value the Grafana sidecar looks for. Default matches
+  # kube-prometheus-stack / grafana chart defaults.
+  sidecarLabel: grafana_dashboard
+  sidecarLabelValue: "1"
+  additionalLabels: {}
+  annotations: {}
