@@ -39,9 +39,14 @@ type Collector struct {
 	ChannelMessagesFiltered *prometheus.GaugeVec
 	ChannelsTotal           *prometheus.GaugeVec
 	ChannelsHealthy         *prometheus.GaugeVec
-	RemediationTotal        *prometheus.CounterVec
-	JVMHeapUsedBytes        *prometheus.GaugeVec
-	DeployErrorsTotal       *prometheus.CounterVec
+	DestinationMessagesReceived *prometheus.GaugeVec
+	DestinationMessagesSent     *prometheus.GaugeVec
+	DestinationMessagesErrored  *prometheus.GaugeVec
+	DestinationMessagesQueued   *prometheus.GaugeVec
+	DestinationMessagesFiltered *prometheus.GaugeVec
+	RemediationTotal            *prometheus.CounterVec
+	JVMHeapUsedBytes            *prometheus.GaugeVec
+	DeployErrorsTotal           *prometheus.CounterVec
 }
 
 // GetCollector returns the singleton metrics collector, registering it on first call.
@@ -56,6 +61,11 @@ func GetCollector() *Collector {
 			collector.ChannelMessagesErrored,
 			collector.ChannelMessagesQueued,
 			collector.ChannelMessagesFiltered,
+			collector.DestinationMessagesReceived,
+			collector.DestinationMessagesSent,
+			collector.DestinationMessagesErrored,
+			collector.DestinationMessagesQueued,
+			collector.DestinationMessagesFiltered,
 			collector.ChannelsTotal,
 			collector.ChannelsHealthy,
 			collector.RemediationTotal,
@@ -103,6 +113,31 @@ func newCollector() *Collector {
 			Help: "Total filtered messages by channel.",
 		}, []string{"instance", "channel"}),
 
+		DestinationMessagesReceived: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_destination_messages_received_total",
+			Help: "Total messages received by destination.",
+		}, []string{"instance", "channel", "destination"}),
+
+		DestinationMessagesSent: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_destination_messages_sent_total",
+			Help: "Total messages sent by destination.",
+		}, []string{"instance", "channel", "destination"}),
+
+		DestinationMessagesErrored: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_destination_messages_errored_total",
+			Help: "Total errored messages by destination.",
+		}, []string{"instance", "channel", "destination"}),
+
+		DestinationMessagesQueued: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_destination_messages_queued",
+			Help: "Current queue depth by destination.",
+		}, []string{"instance", "channel", "destination"}),
+
+		DestinationMessagesFiltered: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_destination_messages_filtered_total",
+			Help: "Total filtered messages by destination.",
+		}, []string{"instance", "channel", "destination"}),
+
 		ChannelsTotal: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channels_total",
 			Help: "Total number of channels.",
@@ -139,6 +174,11 @@ func (c *Collector) ResetInstance(instance string) {
 	c.ChannelMessagesErrored.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelMessagesQueued.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelMessagesFiltered.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DestinationMessagesReceived.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DestinationMessagesSent.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DestinationMessagesErrored.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DestinationMessagesQueued.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.DestinationMessagesFiltered.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelsTotal.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelsHealthy.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.JVMHeapUsedBytes.DeletePartialMatch(prometheus.Labels{"instance": instance})

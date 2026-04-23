@@ -184,6 +184,20 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			collector.ChannelMessagesErrored.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Error))
 			collector.ChannelMessagesQueued.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Queued))
 			collector.ChannelMessagesFiltered.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Filtered))
+
+			// 8b. Update per-destination metrics
+			children := ch.ParseChildStatuses()
+			for _, child := range children {
+				if child.MetaDataID == 0 {
+					continue // skip source connector, only expose destinations
+				}
+				destStats := child.ParseStatistics()
+				collector.DestinationMessagesReceived.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Received))
+				collector.DestinationMessagesSent.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Sent))
+				collector.DestinationMessagesErrored.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Error))
+				collector.DestinationMessagesQueued.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Queued))
+				collector.DestinationMessagesFiltered.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Filtered))
+			}
 		}
 	}
 
