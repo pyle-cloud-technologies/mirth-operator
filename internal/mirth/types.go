@@ -81,13 +81,17 @@ type MirthTimestamp struct {
 }
 
 // DashboardStatus represents a single channel's dashboard status from Mirth.
+// Child entries (destinations) share the same shape; MetaDataID distinguishes
+// source (0) from destination connectors (1+).
 type DashboardStatus struct {
 	ChannelID     string          `json:"channelId"`
 	Name          string          `json:"name"`
 	State         string          `json:"state"` // STARTED, STOPPED, PAUSED, ERROR
+	MetaDataID    int             `json:"metaDataId,omitempty"`
 	DeployedDate  *MirthTimestamp `json:"deployedDate,omitempty"`
 	Statistics    json.RawMessage `json:"statistics,omitempty"`
 	ChildStatuses json.RawMessage `json:"childStatuses,omitempty"`
+	Queued        int64           `json:"queued,omitempty"`
 }
 
 // ConnectorStatus represents a connector (source or destination) status.
@@ -212,6 +216,30 @@ func ParseServerEvents(body []byte) ([]ServerEvent, error) {
 		return nil, nil
 	}
 	return resp.List.Events, nil
+}
+
+// ParseChildStatuses extracts per-destination DashboardStatus entries from the
+// raw childStatuses JSON. Mirth wraps these as {"dashboardStatus": [...]}.
+// Handles the single-element quirk where Mirth serializes a lone child as
+// {"dashboardStatus": {...}} instead of an array.
+func (d *DashboardStatus) ParseChildStatuses() []DashboardStatus {
+	if d.ChildStatuses == nil {
+		return nil
+	}
+
+	var list DashboardStatusList
+	if err := json.Unmarshal(d.ChildStatuses, &list); err == nil && len(list.DashboardStatuses) > 0 {
+		return list.DashboardStatuses
+	}
+
+	var single struct {
+		DashboardStatus DashboardStatus `json:"dashboardStatus"`
+	}
+	if err := json.Unmarshal(d.ChildStatuses, &single); err == nil && single.DashboardStatus.Name != "" {
+		return []DashboardStatus{single.DashboardStatus}
+	}
+
+	return nil
 }
 
 // ParseStatistics extracts ChannelStatistics from the raw Mirth JSON format.

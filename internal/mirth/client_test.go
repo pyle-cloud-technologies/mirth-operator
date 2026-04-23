@@ -99,7 +99,7 @@ func TestGetChannelStatuses(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/channels/statuses", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		resp := `{"list":{"dashboardStatus":[{"channelId":"ch-1","name":"HL7 Inbound","state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":100},{"com.mirth.connect.donkey.model.message.Status":"SENT","long":95},{"com.mirth.connect.donkey.model.message.Status":"ERROR","long":5},{"com.mirth.connect.donkey.model.message.Status":"QUEUED","long":2}]}},{"channelId":"ch-2","name":"FHIR Outbound","state":"STOPPED"}]}}`
+		resp := `{"list":{"dashboardStatus":[{"channelId":"ch-1","name":"HL7 Inbound","state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":100},{"com.mirth.connect.donkey.model.message.Status":"SENT","long":95},{"com.mirth.connect.donkey.model.message.Status":"ERROR","long":5},{"com.mirth.connect.donkey.model.message.Status":"QUEUED","long":2}]},"childStatuses":{"dashboardStatus":[{"channelId":"ch-1","name":"Source","metaDataId":0,"state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":100}]}},{"channelId":"ch-1","name":"dest-1","metaDataId":1,"state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":100},{"com.mirth.connect.donkey.model.message.Status":"SENT","long":90},{"com.mirth.connect.donkey.model.message.Status":"FILTERED","long":10}]}}]}},{"channelId":"ch-2","name":"FHIR Outbound","state":"STOPPED"}]}}`
 		_, _ = w.Write([]byte(resp))
 	})
 
@@ -121,6 +121,25 @@ func TestGetChannelStatuses(t *testing.T) {
 	stats := statuses[0].ParseStatistics()
 	if stats.Received != 100 {
 		t.Errorf("expected 100 received, got %d", stats.Received)
+	}
+
+	// Verify childStatuses were parsed
+	children := statuses[0].ParseChildStatuses()
+	if len(children) != 2 {
+		t.Fatalf("expected 2 child statuses, got %d", len(children))
+	}
+	if children[0].Name != "Source" || children[0].MetaDataID != 0 {
+		t.Errorf("expected Source with metaDataId 0, got %s/%d", children[0].Name, children[0].MetaDataID)
+	}
+	if children[1].Name != "dest-1" || children[1].MetaDataID != 1 {
+		t.Errorf("expected dest-1 with metaDataId 1, got %s/%d", children[1].Name, children[1].MetaDataID)
+	}
+	destStats := children[1].ParseStatistics()
+	if destStats.Sent != 90 {
+		t.Errorf("expected dest-1 sent=90, got %d", destStats.Sent)
+	}
+	if destStats.Filtered != 10 {
+		t.Errorf("expected dest-1 filtered=10, got %d", destStats.Filtered)
 	}
 }
 
@@ -275,4 +294,60 @@ func TestUnauthorizedResponse(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 401 response")
 	}
+}
+
+func TestParseChildStatuses(t *testing.T) {
+	t.Run("array form with source and destination", func(t *testing.T) {
+		ds := DashboardStatus{
+			ChannelID: "ch-1",
+			Name:      "Test Channel",
+			ChildStatuses: json.RawMessage(`{"dashboardStatus":[
+				{"channelId":"ch-1","name":"Source","metaDataId":0,"state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":50}]}},
+				{"channelId":"ch-1","name":"better_rx","metaDataId":1,"state":"STARTED","statistics":{"@class":"linked-hash-map","entry":[{"com.mirth.connect.donkey.model.message.Status":"RECEIVED","long":50},{"com.mirth.connect.donkey.model.message.Status":"SENT","long":0},{"com.mirth.connect.donkey.model.message.Status":"FILTERED","long":50}]}}
+			]}`),
+		}
+
+		children := ds.ParseChildStatuses()
+		if len(children) != 2 {
+			t.Fatalf("expected 2 children, got %d", len(children))
+		}
+		if children[0].MetaDataID != 0 {
+			t.Errorf("expected source metaDataId=0, got %d", children[0].MetaDataID)
+		}
+		if children[1].Name != "better_rx" || children[1].MetaDataID != 1 {
+			t.Errorf("expected better_rx/1, got %s/%d", children[1].Name, children[1].MetaDataID)
+		}
+
+		destStats := children[1].ParseStatistics()
+		if destStats.Received != 50 {
+			t.Errorf("expected received=50, got %d", destStats.Received)
+		}
+		if destStats.Sent != 0 {
+			t.Errorf("expected sent=0, got %d", destStats.Sent)
+		}
+		if destStats.Filtered != 50 {
+			t.Errorf("expected filtered=50, got %d", destStats.Filtered)
+		}
+	})
+
+	t.Run("single element form", func(t *testing.T) {
+		ds := DashboardStatus{
+			ChildStatuses: json.RawMessage(`{"dashboardStatus":{"channelId":"ch-2","name":"solo_dest","metaDataId":1,"state":"STARTED"}}`),
+		}
+
+		children := ds.ParseChildStatuses()
+		if len(children) != 1 {
+			t.Fatalf("expected 1 child, got %d", len(children))
+		}
+		if children[0].Name != "solo_dest" {
+			t.Errorf("expected solo_dest, got %s", children[0].Name)
+		}
+	})
+
+	t.Run("nil returns nil", func(t *testing.T) {
+		ds := DashboardStatus{}
+		if children := ds.ParseChildStatuses(); children != nil {
+			t.Errorf("expected nil, got %v", children)
+		}
+	})
 }
