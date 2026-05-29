@@ -9,6 +9,15 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Additional annotations to add to the controller Pod. Useful for wiring
+# observability autodiscovery (e.g. ad.datadoghq.com/manager.checks for the
+# Datadog Agent's OpenMetrics check) without forking the chart.
+podAnnotations: {}
+
+# Additional labels to add to the controller Pod (merged with the built-in
+# selector labels — do NOT override the selector keys).
+podLabels: {}
+
 serviceAccount:
   create: true
   annotations: {}
