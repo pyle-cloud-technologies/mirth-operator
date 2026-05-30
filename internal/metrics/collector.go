@@ -46,6 +46,7 @@ type Collector struct {
 	DestinationMessagesFiltered *prometheus.GaugeVec
 	RemediationTotal            *prometheus.CounterVec
 	JVMHeapUsedBytes            *prometheus.GaugeVec
+	JVMHeapMaxBytes             *prometheus.GaugeVec
 	DeployErrorsTotal           *prometheus.CounterVec
 }
 
@@ -70,6 +71,7 @@ func GetCollector() *Collector {
 			collector.ChannelsHealthy,
 			collector.RemediationTotal,
 			collector.JVMHeapUsedBytes,
+			collector.JVMHeapMaxBytes,
 			collector.DeployErrorsTotal,
 		)
 	})
@@ -158,6 +160,11 @@ func newCollector() *Collector {
 			Help: "JVM heap memory used in bytes.",
 		}, []string{"instance"}),
 
+		JVMHeapMaxBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mirth_jvm_heap_max_bytes",
+			Help: "JVM maximum heap memory in bytes (Xmx). Use as denominator with mirth_jvm_heap_used_bytes for utilization.",
+		}, []string{"instance"}),
+
 		DeployErrorsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "mirth_deploy_errors_total",
 			Help: "Deploy, compile, or script error events reported by the Mirth /api/events endpoint.",
@@ -182,5 +189,6 @@ func (c *Collector) ResetInstance(instance string) {
 	c.ChannelsTotal.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.ChannelsHealthy.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.JVMHeapUsedBytes.DeletePartialMatch(prometheus.Labels{"instance": instance})
+	c.JVMHeapMaxBytes.DeletePartialMatch(prometheus.Labels{"instance": instance})
 	c.DeployErrorsTotal.DeletePartialMatch(prometheus.Labels{"instance": instance})
 }

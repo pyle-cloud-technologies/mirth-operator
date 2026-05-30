@@ -127,6 +127,7 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		heapUsed := sysStats.AllocMemory - sysStats.FreeMemory
 		instance.Status.Server.JVMHeapUsedBytes = heapUsed
 		collector.JVMHeapUsedBytes.WithLabelValues(instanceName).Set(float64(heapUsed))
+		collector.JVMHeapMaxBytes.WithLabelValues(instanceName).Set(float64(sysStats.MaxMemory))
 	}
 
 	// 6. Poll channel statuses
