@@ -270,3 +270,173 @@ func (d *DashboardStatus) ParseStatistics() ChannelStatistics {
 	}
 	return stats
 }
+
+// LabelUnknown is the fallback value for any derived label whose source is
+// missing, empty, or unrecognized. Exposing the metric with "unknown" rather
+// than dropping it keeps Prometheus series stable across reconciles.
+const LabelUnknown = "unknown"
+
+// labelInternal marks channel-to-channel fan-out (Mirth Channel Reader source
+// and Channel Writer destinations) so per-partner queries can exclude these
+// internal routes.
+const labelInternal = "internal"
+
+// ChannelResponse wraps the Mirth GET /api/channels/{id} envelope: {"channel": {...}}.
+type ChannelResponse struct {
+	Channel Channel `json:"channel"`
+}
+
+// Channel represents the parts of a Mirth channel definition the operator
+// needs to derive descriptive labels for metrics. The full definition is
+// large (transformer scripts, properties grab-bag); we only model what we
+// actually project to labels.
+type Channel struct {
+	ID                    string             `json:"id"`
+	Name                  string             `json:"name"`
+	Revision              int                `json:"revision"`
+	Properties            ChannelProperties  `json:"properties"`
+	SourceConnector       Connector          `json:"sourceConnector"`
+	DestinationConnectors DestinationWrapper `json:"destinationConnectors"`
+}
+
+// ChannelProperties surfaces top-level channel properties that map to labels.
+// Mirth includes many more fields here; this is intentionally a subset.
+type ChannelProperties struct {
+	MessageStorageMode string `json:"messageStorageMode"` // DEVELOPMENT / PRODUCTION / RAW / METADATA / DISABLED
+	EncryptData        bool   `json:"encryptData"`
+}
+
+// Connector represents a single source or destination connector. The label
+// derivations (ChannelType, Direction, Partner) read TransportName and Name.
+type Connector struct {
+	MetaDataID    int    `json:"metaDataId"`
+	Name          string `json:"name"`
+	TransportName string `json:"transportName"`
+	Mode          string `json:"mode"` // SOURCE or DESTINATION
+}
+
+// DestinationWrapper handles Mirth's quirk where destinationConnectors.connector
+// is an array when there are multiple destinations and a bare object when
+// there is exactly one. Parsing into a single shape requires lazy unmarshaling.
+type DestinationWrapper struct {
+	Raw json.RawMessage `json:"connector"`
+}
+
+// Destinations returns the destinations as a slice, tolerating both the
+// array shape (multiple destinations) and the bare-object shape (single
+// destination) that Mirth uses.
+func (d DestinationWrapper) Destinations() []Connector {
+	if len(d.Raw) == 0 {
+		return nil
+	}
+	var arr []Connector
+	if err := json.Unmarshal(d.Raw, &arr); err == nil && len(arr) > 0 {
+		return arr
+	}
+	var single Connector
+	if err := json.Unmarshal(d.Raw, &single); err == nil && single.Name != "" {
+		return []Connector{single}
+	}
+	return nil
+}
+
+// ChannelType returns a coarse classification of the channel based on the
+// source connector's transport. Values are stable, lowercase strings safe
+// to use as Prometheus label values. Unknown transports return "other".
+func (c Channel) ChannelType() string {
+	switch c.SourceConnector.TransportName {
+	case "HTTP Listener", "Web Service Listener":
+		return "http_inbound"
+	case "HTTP Sender", "Web Service Sender":
+		return "http_outbound"
+	case "TCP Listener", "LLP Listener", "MLLP Listener", "HL7 v2.x Listener":
+		return "tcp_inbound"
+	case "TCP Sender", "LLP Sender", "MLLP Sender", "HL7 v2.x Sender":
+		return "tcp_outbound"
+	case "Channel Reader":
+		return labelInternal
+	case "Database Reader":
+		return "db_inbound"
+	case "Database Writer":
+		return "db_outbound"
+	case "File Reader", "SMB Reader", "S3 Reader":
+		return "file_inbound"
+	case "File Writer", "SMB Writer", "S3 Writer":
+		return "file_outbound"
+	case "JavaScript Reader":
+		return "polling"
+	case "JMS Listener":
+		return "jms_inbound"
+	case "JMS Sender":
+		return "jms_outbound"
+	case "SMTP Sender":
+		return "smtp_outbound"
+	case "":
+		return LabelUnknown
+	default:
+		return "other"
+	}
+}
+
+// Direction reports whether the channel is inbound or outbound based on the
+// source connector's transport. A "Channel Reader" (internal fan-out) is
+// classified inbound because it consumes from upstream channels.
+func (c Channel) Direction() string {
+	switch c.ChannelType() {
+	case "http_inbound", "tcp_inbound", "db_inbound", "file_inbound", "jms_inbound", "polling", "internal":
+		return "inbound"
+	case "http_outbound", "tcp_outbound", "db_outbound", "file_outbound", "jms_outbound", "smtp_outbound":
+		return "outbound"
+	default:
+		return LabelUnknown
+	}
+}
+
+// StorageMode returns the channel's persistence mode (DEVELOPMENT / PRODUCTION
+// / RAW / METADATA / DISABLED), normalized to lowercase. Empty string maps to
+// LabelUnknown to avoid a missing-label Prometheus error.
+func (c Channel) StorageMode() string {
+	if c.Properties.MessageStorageMode == "" {
+		return LabelUnknown
+	}
+	return strings.ToLower(c.Properties.MessageStorageMode)
+}
+
+// Partner returns a canonical partner identifier derived from a destination
+// connector's name. Matching is case-insensitive substring against a curated
+// list of common healthcare/clinical partner names. The transport name is
+// used as a fallback for HTTP/TCP destinations whose name does not match a
+// known partner; internal-routing destinations (Channel Writer) return
+// "internal". Unknown destinations return LabelUnknown.
+func Partner(dest Connector) string {
+	name := strings.ToLower(dest.Name)
+	switch {
+	case strings.Contains(name, "betterrx"), strings.Contains(name, "better_rx"), strings.Contains(name, "better rx"):
+		return "betterrx"
+	case strings.Contains(name, "onepoint"), strings.Contains(name, "one point"), strings.Contains(name, "oppc"):
+		return "onepoint"
+	case strings.Contains(name, "dragonfly"):
+		return "dragonfly"
+	case strings.Contains(name, "enclara"):
+		return "enclara"
+	case strings.Contains(name, "scriptsure"):
+		return "scriptsure"
+	case strings.Contains(name, "waystar"):
+		return "waystar"
+	case strings.Contains(name, "ability"):
+		return "ability"
+	case strings.Contains(name, "pdc"), strings.Contains(name, "procare"):
+		return "procare-or-pdc"
+	case strings.Contains(name, "qualis"):
+		return "qualis"
+	case strings.Contains(name, "echo"), strings.Contains(name, "log"):
+		return "echo"
+	}
+	switch dest.TransportName {
+	case "Channel Writer":
+		return labelInternal
+	case "":
+		return LabelUnknown
+	}
+	return "other"
+}

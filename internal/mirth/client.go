@@ -31,6 +31,7 @@ type Client interface {
 	GetServerStatus(ctx context.Context) (*ServerStatusResponse, error)
 	GetSystemStats(ctx context.Context) (*SystemStats, error)
 	GetChannelStatuses(ctx context.Context) ([]DashboardStatus, error)
+	GetChannel(ctx context.Context, channelID string) (*Channel, error)
 	GetChannelStatistics(ctx context.Context, channelID string) (*ChannelStatistics, error)
 	GetEvents(ctx context.Context, sinceID int64, limit int) ([]ServerEvent, error)
 	RestartChannel(ctx context.Context, channelID string) error
@@ -145,6 +146,20 @@ func (c *httpClient) GetChannelStatuses(ctx context.Context) ([]DashboardStatus,
 	}
 
 	return resp.List.DashboardStatuses, nil
+}
+
+func (c *httpClient) GetChannel(ctx context.Context, channelID string) (*Channel, error) {
+	body, err := c.doRequest(ctx, http.MethodGet, fmt.Sprintf("/api/channels/%s", channelID))
+	if err != nil {
+		return nil, fmt.Errorf("getting channel %s: %w", channelID, err)
+	}
+
+	var resp ChannelResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling channel %s: %w", channelID, err)
+	}
+
+	return &resp.Channel, nil
 }
 
 func (c *httpClient) GetChannelStatistics(ctx context.Context, channelID string) (*ChannelStatistics, error) {

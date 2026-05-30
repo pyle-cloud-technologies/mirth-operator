@@ -169,34 +169,50 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		details = append(details, detail)
 
-		// 8. Update per-channel metrics
+		// 8. Resolve descriptive labels for this channel (channel_type,
+		// storage_mode, direction, partner-per-destination). Helper degrades
+		// gracefully to "unknown" if the channel-definition fetch fails.
+		var channelType, storageMode, direction string
+		var destPartners map[string]string
+		if instance.Spec.Monitoring.Metrics.Enabled {
+			channelType, storageMode, direction, destPartners = r.channelLabels(ctx, mirthCli, ch.ChannelID)
+		} else {
+			channelType, storageMode, direction = mirthclient.LabelUnknown, mirthclient.LabelUnknown, mirthclient.LabelUnknown
+			destPartners = map[string]string{}
+		}
+
+		// 9. Update per-channel metrics
 		if instance.Spec.Monitoring.Metrics.Enabled {
 			for _, s := range states {
 				val := float64(0)
 				if ch.State == s {
 					val = 1
 				}
-				collector.ChannelStatus.WithLabelValues(instanceName, ch.Name, s).Set(val)
+				collector.ChannelStatus.WithLabelValues(instanceName, ch.Name, s, channelType, storageMode, direction).Set(val)
 			}
 
-			collector.ChannelMessagesReceived.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Received))
-			collector.ChannelMessagesSent.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Sent))
-			collector.ChannelMessagesErrored.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Error))
-			collector.ChannelMessagesQueued.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Queued))
-			collector.ChannelMessagesFiltered.WithLabelValues(instanceName, ch.Name).Set(float64(stats.Filtered))
+			collector.ChannelMessagesReceived.WithLabelValues(instanceName, ch.Name, channelType, storageMode, direction).Set(float64(stats.Received))
+			collector.ChannelMessagesSent.WithLabelValues(instanceName, ch.Name, channelType, storageMode, direction).Set(float64(stats.Sent))
+			collector.ChannelMessagesErrored.WithLabelValues(instanceName, ch.Name, channelType, storageMode, direction).Set(float64(stats.Error))
+			collector.ChannelMessagesQueued.WithLabelValues(instanceName, ch.Name, channelType, storageMode, direction).Set(float64(stats.Queued))
+			collector.ChannelMessagesFiltered.WithLabelValues(instanceName, ch.Name, channelType, storageMode, direction).Set(float64(stats.Filtered))
 
-			// 8b. Update per-destination metrics
+			// 9b. Update per-destination metrics
 			children := ch.ParseChildStatuses()
 			for _, child := range children {
 				if child.MetaDataID == 0 {
 					continue // skip source connector, only expose destinations
 				}
+				partner := destPartners[child.Name]
+				if partner == "" {
+					partner = "unknown"
+				}
 				destStats := child.ParseStatistics()
-				collector.DestinationMessagesReceived.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Received))
-				collector.DestinationMessagesSent.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Sent))
-				collector.DestinationMessagesErrored.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Error))
-				collector.DestinationMessagesQueued.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Queued))
-				collector.DestinationMessagesFiltered.WithLabelValues(instanceName, ch.Name, child.Name).Set(float64(destStats.Filtered))
+				collector.DestinationMessagesReceived.WithLabelValues(instanceName, ch.Name, child.Name, partner).Set(float64(destStats.Received))
+				collector.DestinationMessagesSent.WithLabelValues(instanceName, ch.Name, child.Name, partner).Set(float64(destStats.Sent))
+				collector.DestinationMessagesErrored.WithLabelValues(instanceName, ch.Name, child.Name, partner).Set(float64(destStats.Error))
+				collector.DestinationMessagesQueued.WithLabelValues(instanceName, ch.Name, child.Name, partner).Set(float64(destStats.Queued))
+				collector.DestinationMessagesFiltered.WithLabelValues(instanceName, ch.Name, child.Name, partner).Set(float64(destStats.Filtered))
 			}
 		}
 	}
@@ -372,4 +388,35 @@ func (r *MirthInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&mirthv1alpha1.MirthInstance{}).
 		Named("mirthinstance").
 		Complete(r)
+}
+
+// channelLabels resolves the descriptive labels (channel_type, storage_mode,
+// direction) and per-destination partner mapping for a channel. Failures to
+// fetch the channel definition degrade gracefully: each label value is set to
+// mirthclient.LabelUnknown and partner mappings are empty. This keeps the
+// metric series stable across reconciles even when Mirth is briefly
+// unreachable for /api/channels/{id} but reachable for /api/channels/statuses.
+func (r *MirthInstanceReconciler) channelLabels(
+	ctx context.Context, cli mirthclient.Client, channelID string,
+) (channelType, storageMode, direction string, partners map[string]string) {
+	log := logf.FromContext(ctx)
+	channelType, storageMode, direction = mirthclient.LabelUnknown, mirthclient.LabelUnknown, mirthclient.LabelUnknown
+	partners = map[string]string{}
+
+	def, err := cli.GetChannel(ctx, channelID)
+	if err != nil {
+		log.V(1).Info("Failed to fetch channel definition; descriptive labels unavailable",
+			"channelId", channelID, "error", err)
+		return
+	}
+	if def == nil {
+		return
+	}
+	channelType = def.ChannelType()
+	storageMode = def.StorageMode()
+	direction = def.Direction()
+	for _, d := range def.DestinationConnectors.Destinations() {
+		partners[d.Name] = mirthclient.Partner(d)
+	}
+	return
 }
