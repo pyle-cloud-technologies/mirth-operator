@@ -30,15 +30,15 @@ var (
 
 // Collector holds all Prometheus metrics for Mirth instances.
 type Collector struct {
-	MirthUp                 *prometheus.GaugeVec
-	ChannelStatus           *prometheus.GaugeVec
-	ChannelMessagesReceived *prometheus.GaugeVec
-	ChannelMessagesSent     *prometheus.GaugeVec
-	ChannelMessagesErrored  *prometheus.GaugeVec
-	ChannelMessagesQueued   *prometheus.GaugeVec
-	ChannelMessagesFiltered *prometheus.GaugeVec
-	ChannelsTotal           *prometheus.GaugeVec
-	ChannelsHealthy         *prometheus.GaugeVec
+	MirthUp                     *prometheus.GaugeVec
+	ChannelStatus               *prometheus.GaugeVec
+	ChannelMessagesReceived     *prometheus.GaugeVec
+	ChannelMessagesSent         *prometheus.GaugeVec
+	ChannelMessagesErrored      *prometheus.GaugeVec
+	ChannelMessagesQueued       *prometheus.GaugeVec
+	ChannelMessagesFiltered     *prometheus.GaugeVec
+	ChannelsTotal               *prometheus.GaugeVec
+	ChannelsHealthy             *prometheus.GaugeVec
 	DestinationMessagesReceived *prometheus.GaugeVec
 	DestinationMessagesSent     *prometheus.GaugeVec
 	DestinationMessagesErrored  *prometheus.GaugeVec
@@ -86,57 +86,57 @@ func newCollector() *Collector {
 		ChannelStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_status",
 			Help: "Current channel state (1 if channel is in this state, 0 otherwise).",
-		}, []string{"instance", "channel", "state"}),
+		}, []string{"instance", "channel", "state", "channel_type", "storage_mode", "direction"}),
 
 		ChannelMessagesReceived: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_messages_received_total",
 			Help: "Total messages received by channel.",
-		}, []string{"instance", "channel"}),
+		}, []string{"instance", "channel", "channel_type", "storage_mode", "direction"}),
 
 		ChannelMessagesSent: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_messages_sent_total",
 			Help: "Total messages sent by channel.",
-		}, []string{"instance", "channel"}),
+		}, []string{"instance", "channel", "channel_type", "storage_mode", "direction"}),
 
 		ChannelMessagesErrored: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_messages_errored_total",
 			Help: "Total errored messages by channel.",
-		}, []string{"instance", "channel"}),
+		}, []string{"instance", "channel", "channel_type", "storage_mode", "direction"}),
 
 		ChannelMessagesQueued: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_messages_queued",
 			Help: "Current queue depth by channel.",
-		}, []string{"instance", "channel"}),
+		}, []string{"instance", "channel", "channel_type", "storage_mode", "direction"}),
 
 		ChannelMessagesFiltered: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channel_messages_filtered_total",
 			Help: "Total filtered messages by channel.",
-		}, []string{"instance", "channel"}),
+		}, []string{"instance", "channel", "channel_type", "storage_mode", "direction"}),
 
 		DestinationMessagesReceived: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_destination_messages_received_total",
 			Help: "Total messages received by destination.",
-		}, []string{"instance", "channel", "destination"}),
+		}, []string{"instance", "channel", "destination", "partner"}),
 
 		DestinationMessagesSent: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_destination_messages_sent_total",
 			Help: "Total messages sent by destination.",
-		}, []string{"instance", "channel", "destination"}),
+		}, []string{"instance", "channel", "destination", "partner"}),
 
 		DestinationMessagesErrored: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_destination_messages_errored_total",
 			Help: "Total errored messages by destination.",
-		}, []string{"instance", "channel", "destination"}),
+		}, []string{"instance", "channel", "destination", "partner"}),
 
 		DestinationMessagesQueued: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_destination_messages_queued",
 			Help: "Current queue depth by destination.",
-		}, []string{"instance", "channel", "destination"}),
+		}, []string{"instance", "channel", "destination", "partner"}),
 
 		DestinationMessagesFiltered: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_destination_messages_filtered_total",
 			Help: "Total filtered messages by destination.",
-		}, []string{"instance", "channel", "destination"}),
+		}, []string{"instance", "channel", "destination", "partner"}),
 
 		ChannelsTotal: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "mirth_channels_total",

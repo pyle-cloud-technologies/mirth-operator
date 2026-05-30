@@ -55,6 +55,10 @@ func (m *mockClient) GetChannelStatuses(_ context.Context) ([]mirth.DashboardSta
 	return nil, nil
 }
 
+func (m *mockClient) GetChannel(_ context.Context, _ string) (*mirth.Channel, error) {
+	return &mirth.Channel{}, nil
+}
+
 func (m *mockClient) GetChannelStatistics(_ context.Context, _ string) (*mirth.ChannelStatistics, error) {
 	return &mirth.ChannelStatistics{}, nil
 }
