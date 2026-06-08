@@ -153,8 +153,9 @@ func main() {
 	}
 
 	if err := (&controller.MirthInstanceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		APIReader: mgr.GetAPIReader(),
+		Scheme:    mgr.GetScheme(),
 		//nolint:staticcheck // TODO: migrate to GetEventRecorder when available
 		Recorder: mgr.GetEventRecorderFor("mirth-operator"),
 	}).SetupWithManager(mgr); err != nil {

@@ -109,9 +109,10 @@ var _ = Describe("MirthInstance Controller", func() {
 
 		It("should set Connected=False when Mirth is unreachable", func() {
 			controllerReconciler := &MirthInstanceReconciler{
-				Client:   k8sClient,
-				Scheme:   k8sClient.Scheme(),
-				Recorder: &fakeRecorder{},
+				Client:    k8sClient,
+				APIReader: k8sClient,
+				Scheme:    k8sClient.Scheme(),
+				Recorder:  &fakeRecorder{},
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
@@ -240,9 +241,10 @@ var _ = Describe("MirthInstance Controller", func() {
 
 		It("increments DeployErrorsTotal and sets DeployErrorsDetected=True", func() {
 			reconciler := &MirthInstanceReconciler{
-				Client:   k8sClient,
-				Scheme:   k8sClient.Scheme(),
-				Recorder: &fakeRecorder{},
+				Client:    k8sClient,
+				APIReader: k8sClient,
+				Scheme:    k8sClient.Scheme(),
+				Recorder:  &fakeRecorder{},
 			}
 
 			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedName})
