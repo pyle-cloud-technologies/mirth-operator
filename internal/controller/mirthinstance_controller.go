@@ -43,8 +43,12 @@ const maxRemediationHistory = 50
 // MirthInstanceReconciler reconciles a MirthInstance object.
 type MirthInstanceReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	// APIReader bypasses the controller-runtime cache. Used for Secret reads so
+	// the manager does not start an informer that lists/watches every Secret
+	// cluster-wide — that cache alone can exceed the pod memory limit.
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 
 	// lastEventID tracks the highest OIE event id already observed for each
 	// instance, so /api/events polling only returns new events per reconcile.
@@ -78,7 +82,7 @@ func (r *MirthInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		Name:      instance.Spec.Connection.AuthSecretRef.Name,
 		Namespace: instance.Namespace,
 	}
-	if err := r.Get(ctx, secretRef, &secret); err != nil {
+	if err := r.APIReader.Get(ctx, secretRef, &secret); err != nil {
 		log.Error(err, "Failed to get auth secret", "secret", secretRef)
 		r.setCondition(&instance, "Connected", metav1.ConditionFalse, "SecretNotFound", "Auth secret not found: "+err.Error())
 		collector.MirthUp.WithLabelValues(instanceName).Set(0)
